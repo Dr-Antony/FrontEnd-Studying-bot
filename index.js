@@ -1,10 +1,7 @@
 require('dotenv').config();
 const { Bot, Keyboard, InlineKeyboard, GrammyError, HttpError } = require('grammy');
-
-
-
 const bot = new Bot(process.env.BOT_API_KEY);
-
+const { getRandomQuestion, getCorrectAnswer } = require('./utils.js')
 
 bot.command('start', async (ctx) => {
     const startKeyboard = new Keyboard()
@@ -21,26 +18,69 @@ bot.command('start', async (ctx) => {
     })
 });
 
-bot.hears(['JavaScript', 'CSS', 'React', 'General Issues'], async (ctx) => {
-    const inlineKeyboard = new InlineKeyboard().text('Получить ответ', JSON.stringify({
-        type: ctx.message.text,
-        questionId:1
-    })).text('Отменить', 'cancel')
-    ctx.reply(`Что такое ${ctx.message.text}?`, {
+
+
+
+
+
+bot.hears(['JavaScript', 'CSS', 'React', 'HTML'], async (ctx) => {
+    const topic = ctx.message.text.toLowerCase();
+    const question = getRandomQuestion(topic);
+    let inlineKeyboard;
+    if (question.hasOptions) {
+        const buttonRows = question.options.map((option) => {
+            return [InlineKeyboard.text(option.text, JSON.stringify({
+                type: `${topic}-option`,
+                isCorrect: option.isCorrect,
+                questionId: question.id
+            }))]
+        });
+        inlineKeyboard = InlineKeyboard.from(buttonRows);
+    } else {
+        inlineKeyboard = new InlineKeyboard().text('Узнать ответ', JSON.stringify({
+            type: topic,
+            questionId: question.id
+        }));
+    }
+
+
+    ctx.reply(question.text, {
         reply_markup: inlineKeyboard
     })
 });
 
+
+
+
+
+
+
 bot.on('callback_query:data', async (ctx) => {
-    if (ctx.callbackQuery.data === 'cancel') {
-        await ctx.reply('Отменено');
+    const callbackData = JSON.parse(ctx.callbackQuery.data);
+    if (!callbackData.type.includes('option')) {
+        const answer = getCorrectAnswer(callbackData.type, callbackData.questionId)
+        await ctx.reply(answer, {
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        });
         await ctx.answerCallbackQuery();
         return;
     };
-    const callbackData = JSON.parse(ctx.callbackQuery.data);
-    await ctx.reply(`${callbackData.type} - составляющая фронтенда.`);
+    if (callbackData.isCorrect) {
+        await ctx.reply('Ответ верный ✅');
+        await ctx.answerCallbackQuery();
+        return;
+    }
+    const answer = getCorrectAnswer(callbackData.type.split('-')[0], callbackData.questionId);
+    await ctx.reply(`Ответ неверный ❌, правильный ответ: ${answer}`);
     await ctx.answerCallbackQuery();
-})
+});
+
+
+
+
+
+
 
 bot.catch((err) => {
     const ctx = err.ctx;
