@@ -6,7 +6,6 @@ const getRandomQuestion = (topic) => {
     const questionTopic = topic.toLowerCase();
     const random = new Random();
     const randomQuestionIndex = random.integer(0, questions[questionTopic].length - 1)
-    // const randomQuestionIndex = Math.floor(Math.random() * questions[questionTopic].length);
     return questions[questionTopic][randomQuestionIndex];
 };
 

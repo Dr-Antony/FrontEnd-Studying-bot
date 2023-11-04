@@ -3,6 +3,13 @@ const { Bot, Keyboard, InlineKeyboard, GrammyError, HttpError } = require('gramm
 const bot = new Bot(process.env.BOT_API_KEY);
 const { getRandomQuestion, getCorrectAnswer } = require('./utils.js')
 
+
+
+const { Random } = require('random-js');
+const random = new Random();
+const questions = require('./questions.json');
+
+
 bot.command('start', async (ctx) => {
     const startKeyboard = new Keyboard()
         .text('JavaScript')
@@ -10,6 +17,8 @@ bot.command('start', async (ctx) => {
         .row()
         .text('CSS')
         .text('React')
+        .row()
+        .text('Random question')
         // .text('General Issues')
         .resized();
     await ctx.reply('Привет, это бот для подготовки к собеседованию! \n Не передумал ?');
@@ -23,8 +32,17 @@ bot.command('start', async (ctx) => {
 
 
 
-bot.hears(['JavaScript', 'CSS', 'React', 'HTML'], async (ctx) => {
-    const topic = ctx.message.text.toLowerCase();
+bot.hears(['JavaScript', 'CSS', 'React', 'HTML','Random question'], async (ctx) => {
+    let topic = ctx.message.text.toLowerCase();
+
+
+    if (topic === 'random question') {
+        const various = Object.keys(questions);
+        const randomTopic = various[random.integer(0, various.length - 1)];
+        topic = randomTopic;
+    };
+
+
     const question = getRandomQuestion(topic);
     let inlineKeyboard;
     if (question.hasOptions) {
