@@ -10,6 +10,7 @@
   "author": "Anton Nedialkov",
   "license": "ISC",
   "dependencies": {
+    "@grammyjs/storage-free": "^2.4.0",
     "dotenv": "^16.3.1",
     "grammy": "^1.19.2",
     "random-js": "^2.1.0"
